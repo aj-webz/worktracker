@@ -9,13 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AboutRouteImport } from './routes/about'
+import { Route as PathLessLayoutRouteImport } from './routes/_pathLessLayout'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardsIndexRouteImport } from './routes/dashboards/index'
+import { Route as PathLessLayoutManageRouteImport } from './routes/_pathLessLayout.manage'
+import { Route as PathLessLayoutDashboardRouteImport } from './routes/_pathLessLayout.dashboard'
 
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const PathLessLayoutRoute = PathLessLayoutRouteImport.update({
+  id: '/_pathLessLayout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -23,49 +23,59 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardsIndexRoute = DashboardsIndexRouteImport.update({
-  id: '/dashboards/',
-  path: '/dashboards/',
-  getParentRoute: () => rootRouteImport,
+const PathLessLayoutManageRoute = PathLessLayoutManageRouteImport.update({
+  id: '/manage',
+  path: '/manage',
+  getParentRoute: () => PathLessLayoutRoute,
+} as any)
+const PathLessLayoutDashboardRoute = PathLessLayoutDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => PathLessLayoutRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/dashboards/': typeof DashboardsIndexRoute
+  '/dashboard': typeof PathLessLayoutDashboardRoute
+  '/manage': typeof PathLessLayoutManageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/dashboards': typeof DashboardsIndexRoute
+  '/dashboard': typeof PathLessLayoutDashboardRoute
+  '/manage': typeof PathLessLayoutManageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/dashboards/': typeof DashboardsIndexRoute
+  '/_pathLessLayout': typeof PathLessLayoutRouteWithChildren
+  '/_pathLessLayout/dashboard': typeof PathLessLayoutDashboardRoute
+  '/_pathLessLayout/manage': typeof PathLessLayoutManageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/dashboards/'
+  fullPaths: '/' | '/dashboard' | '/manage'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/dashboards'
-  id: '__root__' | '/' | '/about' | '/dashboards/'
+  to: '/' | '/dashboard' | '/manage'
+  id:
+    | '__root__'
+    | '/'
+    | '/_pathLessLayout'
+    | '/_pathLessLayout/dashboard'
+    | '/_pathLessLayout/manage'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
-  DashboardsIndexRoute: typeof DashboardsIndexRoute
+  PathLessLayoutRoute: typeof PathLessLayoutRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/_pathLessLayout': {
+      id: '/_pathLessLayout'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PathLessLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -75,20 +85,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboards/': {
-      id: '/dashboards/'
-      path: '/dashboards'
-      fullPath: '/dashboards/'
-      preLoaderRoute: typeof DashboardsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_pathLessLayout/manage': {
+      id: '/_pathLessLayout/manage'
+      path: '/manage'
+      fullPath: '/manage'
+      preLoaderRoute: typeof PathLessLayoutManageRouteImport
+      parentRoute: typeof PathLessLayoutRoute
+    }
+    '/_pathLessLayout/dashboard': {
+      id: '/_pathLessLayout/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof PathLessLayoutDashboardRouteImport
+      parentRoute: typeof PathLessLayoutRoute
     }
   }
 }
 
+interface PathLessLayoutRouteChildren {
+  PathLessLayoutDashboardRoute: typeof PathLessLayoutDashboardRoute
+  PathLessLayoutManageRoute: typeof PathLessLayoutManageRoute
+}
+
+const PathLessLayoutRouteChildren: PathLessLayoutRouteChildren = {
+  PathLessLayoutDashboardRoute: PathLessLayoutDashboardRoute,
+  PathLessLayoutManageRoute: PathLessLayoutManageRoute,
+}
+
+const PathLessLayoutRouteWithChildren = PathLessLayoutRoute._addFileChildren(
+  PathLessLayoutRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  DashboardsIndexRoute: DashboardsIndexRoute,
+  PathLessLayoutRoute: PathLessLayoutRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

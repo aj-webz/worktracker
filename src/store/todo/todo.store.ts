@@ -1,49 +1,79 @@
 import { create } from "zustand";
-import * as z from "zod"
-import type { TodoStore } from "./todo.types";
+import { persist } from "zustand/middleware";
 import { nanoid } from "nanoid";
+import type { TodoStore } from "./todo.types";
 
 
-const todoInput = z.string().trim().min(2)
-export const useTodoStore = create<TodoStore>((set) => ({
-  works: [],
-  error: null,
 
-  addWork: (title) => {
-
-    const result = todoInput.safeParse(title);
-    if (!result.success) {
-      set({ error: result.error.issues[0].message });
-      alert("No spaces allowed");
-      return;
-    }
-
-    set((state) => ({
-      works: [
-        ...state.works,
-        {
-          id: nanoid(),
-          work: (result.data).trim(),
-          completed: false,
-        },
-      ],
+export const useTodoStore = create<TodoStore>()(
+  persist(
+    (set) => ({
+      todos: [],
       error: null,
-    }));
-  },
+      addTodo: (input) => {
+        if (!input.title.trim()) {
+          set({ error: "Title cannot be empty" });
+          return;
+        }
 
-  completeWork: (id) =>
-    set((state) => ({
-      works: state.works.map((work) =>
-        work.id === id
-          ? { ...work, completed: !work.completed }
-          : work
-      ),
-    })),
+        set((state) => ({
+          todos: [
+            ...state.todos,
+            {
+              id: nanoid(),
+              title: input.title.trim(),
+              description: input.description.trim(),
+              status: "in-progress",
+              completed: false,
+              created: new Date(),
+              endDate: input.endDate ?? null,
+            },
+          ],
+          error: null,
+        }));
+      },
+      toggleTodo: (id) =>
+        set((state) => ({
+          todos: state.todos.map((todo) =>
+            todo.id === id
+              ? {
+                ...todo,
+                completed: !todo.completed,
+                status: todo.completed
+                  ? "in-progress"
+                  : "completed",
+              }
+              : todo
+          ),
+        })),
+      deleteTodo: (id) =>
+        set((state) => ({
+          todos: state.todos.filter((todo) => todo.id !== id),
+        })),
 
-  deleteWork: (id) =>
-    set((state) => ({
-      works: state.works.filter((todo) => todo.id !== id),
-    })),
 
-  clearError: () => set({ error: null }),
-}));
+      clearError: () => set({ error: null }),
+
+      updateTodoStatus: (id, status) =>
+        set((state) => ({
+          todos: state.todos.map((todo) =>
+            todo.id === id
+              ? {
+                ...todo,
+                status,
+                completed: status === "completed",
+              }
+              : todo
+          ),
+        })),
+
+
+    }),
+    {
+      name: "work-tracker-store",
+      partialize: (state) => ({
+        todos: state.todos,
+      }),
+    }
+  )
+);
